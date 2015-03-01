@@ -62,6 +62,8 @@
 
 #include "er-coap-13/er-coap-13.h"
 
+#define LWM2M_WITH_LOGS 0
+
 #ifdef LWM2M_WITH_LOGS
 #include <inttypes.h>
 #define LOG(STR) lwm2m_printf("[%s:%d] " STR "\r\n", __func__ , __LINE__)

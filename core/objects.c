@@ -244,6 +244,7 @@ coap_status_t object_write(lwm2m_context_t * contextP,
     }
     else if (NULL == targetP->writeFunc)
     {
+	printf("test-----------\n");
         result = COAP_405_METHOD_NOT_ALLOWED;
     }
     else

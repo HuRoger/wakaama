@@ -76,6 +76,14 @@
 
 #define PRV_TLV_BUFFER_SIZE 64
 
+#define RES_M_On_Off      	              5850
+#define RES_O_Dimmer          		      5851
+#define RES_O_Colour        		      5706
+#define RES_O_Units      		      5701
+#define RES_O_On_Time               	      5852
+#define RES_O_Cumulative_active_power         5805
+#define RES_O_Power_factor     		      5820
+
 /*
  * Multiple instance objects can use userdata to store data that will be shared between the different instances.
  * The lwm2m_object_t object structure - which represent every object of the liblwm2m as seen in the single instance
@@ -348,12 +356,12 @@ lwm2m_object_t * get_test_object(void)
         memset(testObj, 0, sizeof(lwm2m_object_t));
 
         testObj->objID = TEST_OBJECT_ID;
-        for (i=0 ; i < 3 ; i++)
+        for (i=0 ; i < 2 ; i++)
         {
             targetP = (prv_instance_t *)lwm2m_malloc(sizeof(prv_instance_t));
             if (NULL == targetP) return NULL;
             memset(targetP, 0, sizeof(prv_instance_t));
-            targetP->shortID = 10 + i;
+            targetP->shortID = i;
             targetP->test    = 20 + i;
             targetP->dec     = -30 + i + (double)i/100.0;
             testObj->instanceList = LWM2M_LIST_ADD(testObj->instanceList, targetP);

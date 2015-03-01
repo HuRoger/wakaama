@@ -65,6 +65,8 @@
 #include "connection.h"
 #endif
 
+#define LWM2M_WITH_LOGS 1
+
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -87,7 +89,7 @@
 int g_reboot = 0;
 static int g_quit = 0;
 
-#define OBJ_COUNT 9
+#define OBJ_COUNT 11
 lwm2m_object_t * objArray[OBJ_COUNT];
 
 // only backup security and server objects
@@ -812,7 +814,7 @@ int main(int argc, char *argv[])
     const char * server = NULL;
     const char * serverPort = LWM2M_STANDARD_PORT_STR;
     char * name = "testlwm2mclient";
-    int lifetime = 300;
+    int lifetime = 600;
     int batterylevelchanging = 0;
     time_t reboot_time = 0;
     int opt;
@@ -835,6 +837,7 @@ int main(int argc, char *argv[])
      * The firsts tree are easy to understand, the callback is the function that will be called when this command is typed
      * and in the last one will be stored the lwm2m context (allowing access to the server settings and the objects).
      */
+
     command_desc_t commands[] =
     {
             {"list", "List known servers.", NULL, prv_output_servers, NULL},
@@ -970,7 +973,7 @@ int main(int argc, char *argv[])
     /*
      *This call an internal function that create an IPV6 socket on the port 5683.
      */
-    fprintf(stderr, "Trying to bind LWM2M Client to port %s\r\n", localPort);
+    fprintf(stderr, "123Trying to bind LWM2M Client to port %s\r\n", localPort);
     data.sock = create_socket(localPort, data.addressFamily);
     if (data.sock < 0)
     {
@@ -1078,6 +1081,20 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    objArray[9] = get_object_light();
+    if (NULL == objArray[9])
+    {
+        fprintf(stderr, "Failed to create light object\r\n");
+        return -1;
+    }
+#if 1
+    objArray[10] = get_object_distance();
+    if (NULL == objArray[10])
+    {
+        fprintf(stderr, "Failed to create distance object\r\n");
+        return -1;
+    }
+#endif
     int instId = 0;
     objArray[8] = acc_ctrl_create_object();
     if (NULL == objArray[8])
@@ -1314,7 +1331,7 @@ int main(int argc, char *argv[])
 						if (0 != result)
                         {
                              printf("error handling message %d\n",result);
-                        }
+                       	}
 #else
                         lwm2m_handle_packet(lwm2mH, buffer, numBytes, connP);
 #endif

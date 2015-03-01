@@ -50,6 +50,22 @@ void display_firmware_object(lwm2m_object_t * objectP);
 lwm2m_object_t * get_object_location(void);
 void free_object_location(lwm2m_object_t * object);
 void display_location_object(lwm2m_object_t * objectP);
+
+/*
+ * object_light.c
+ */
+lwm2m_object_t * get_object_light(void);
+void free_object_light(lwm2m_object_t * object);
+void display_light_object(lwm2m_object_t * objectP);
+
+/*
+ * object_distacne.c
+ */
+lwm2m_object_t * get_object_distance(void);
+void free_object_distance(lwm2m_object_t * object);
+void display_distance_object(lwm2m_object_t * objectP);
+
+
 /*
  * object_test.c
  */
