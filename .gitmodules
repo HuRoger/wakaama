@@ -1,3 +1,6 @@
 [submodule "platforms/Linux/tinydtls"]
 	path = examples/shared/tinydtls
 	url = https://git.eclipse.org/r/tinydtls/org.eclipse.tinydtls
+[submodule "examples/client/BBBIOlib"]
+	path = examples/client/BBBIOlib
+	url = https://github.com/HuRoger/BBBIOlib.git
