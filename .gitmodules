@@ -4,3 +4,6 @@
 [submodule "examples/client/BBBIOlib"]
 	path = examples/client/BBBIOlib
 	url = https://github.com/HuRoger/BBBIOlib.git
+[submodule "examples/client/hcsr04"]
+	path = examples/client/hcsr04
+	url = https://github.com/HuRoger/hcsr04.git
