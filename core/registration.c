@@ -217,6 +217,7 @@ static void prv_handleRegistrationUpdateReply(lwm2m_transaction_t * transacP,
         {
             targetP->registration = tv_sec;
         }
+#if 1       
         if (packet != NULL && packet->code == COAP_204_CHANGED)
         {
             targetP->status = STATE_REGISTERED;
@@ -227,6 +228,11 @@ static void prv_handleRegistrationUpdateReply(lwm2m_transaction_t * transacP,
             targetP->status = STATE_REG_FAILED;
             LOG("Registration update failed");
         }
+#else
+        targetP->status = STATE_REGISTERED;
+        LOG("Registration update successful");
+
+#endif
     }
 }
 

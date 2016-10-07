@@ -66,6 +66,9 @@ connection_t * connection_find(connection_t * connList,
     connection_t * connP;
 
     connP = connList;
+
+    memcpy(&(connP->addr), addr, addrLen);
+/*
     while (connP != NULL)
     {
         if ((connP->addrLen == addrLen)
@@ -75,7 +78,7 @@ connection_t * connection_find(connection_t * connList,
         }
         connP = connP->next;
     }
-
+*/
     return connP;
 }
 
@@ -166,7 +169,7 @@ int connection_send(connection_t *connP,
     int nbSent;
     size_t offset;
 
-#ifdef WITH_LOGS
+//#ifdef WITH_LOGS
     char s[INET6_ADDRSTRLEN];
     in_port_t port;
 
@@ -188,7 +191,7 @@ int connection_send(connection_t *connP,
     fprintf(stderr, "Sending %d bytes to [%s]:%hu\r\n", length, s, ntohs(port));
 
     output_buffer(stderr, buffer, length, 0);
-#endif
+//#endif
 
     offset = 0;
     while (offset != length)
