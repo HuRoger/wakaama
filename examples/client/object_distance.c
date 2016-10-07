@@ -113,19 +113,27 @@
 
 // Resource Id's:
 
-#define RES_M_distance                        1
-
-#define RES_O_Dimmer                          5851
-
-#define RES_O_Colour                          5706
+#define RES_M_distance                        5700
 
 #define RES_O_Units                           5701
+
+#define RES_O_MinRangeValue                   5603
+
+#define RES_O_MaxRangeValue                   5604
 
 #define RES_O_On_Time                         5852
 
 #define RES_O_Cumulative_active_power         5805
 
 #define RES_O_Power_factor                    5820
+
+
+#define PRV_Units                             "centimeter"
+
+#define PRV_MinRangeValue                     0
+
+#define PRV_MaxRangeValue                     100
+
 
 
 
@@ -185,6 +193,7 @@ void gpio_low()
 #endif
 double get_distance()
 {
+#if 0    
 	/* Initialize the PRU */
 
 	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
@@ -205,7 +214,7 @@ double get_distance()
 
 
 	prussdrv_exec_program(0, "hcsr04.bin");
-
+#endif
 	/* Get measurements */
 
 		// Wait for the PRU interrupt
@@ -219,7 +228,7 @@ double get_distance()
 
 		// so it takes 29.12 us to make 1 cm, i.e. 58.44 us for a roundtrip of 1 cm
 
-//		printf("Distance = %.2f cm\n", (float) pruData[0] / 58.44);
+		//printf("Distance = %.2f cm\n", (float) pruData[0] / 58.44);
 
 
 	/* Disable PRU and close memory mapping*/
@@ -228,7 +237,8 @@ double get_distance()
 
 //	prussdrv_exit();
 
-    return (double) pruData[0] / 58.44;
+   // return (double) pruData[0] / 58.44;
+   return 0;
 }
 
 
@@ -259,6 +269,22 @@ static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
         lwm2m_data_encode_float(locDataP->distance, dataP);
 
         break;
+    case RES_O_Units:
+
+        lwm2m_data_encode_string(PRV_Units, dataP);
+
+        break;
+    case RES_O_MinRangeValue :
+
+        lwm2m_data_encode_float(PRV_MinRangeValue, dataP);
+
+        break;
+    case RES_O_MaxRangeValue:
+
+        lwm2m_data_encode_float(PRV_MaxRangeValue, dataP);
+
+        break;
+  
 
     default:
 
@@ -328,6 +354,9 @@ printf("test read\n");
         uint16_t readResIds[] = {
 
                 RES_M_distance,
+                RES_O_Units,
+                RES_O_MinRangeValue,
+                RES_O_MaxRangeValue
 
         }; // readable resources!
 
@@ -437,7 +466,10 @@ static uint8_t prv_distance_discover(uint16_t instanceId,
     {
 
         uint16_t resList[] = {
-            RES_M_distance
+            RES_M_distance,
+            RES_O_Units,
+            RES_O_MinRangeValue,
+            RES_O_MaxRangeValue
         };
 
         int nbRes = sizeof(resList) / sizeof(uint16_t);
@@ -466,6 +498,9 @@ static uint8_t prv_distance_discover(uint16_t instanceId,
             {
 
             case RES_M_distance:
+            case RES_O_Units:   
+            case RES_O_MinRangeValue:
+            case RES_O_MaxRangeValue:
                 break;
 
             default:
@@ -698,7 +733,7 @@ lwm2m_object_t * get_object_distance(void)
 
             distance_data_t* data = (distance_data_t*)distanceObj->userData;
 
-            data->distance = get_distance(); // Mount Everest :)
+            data->distance = 0; // Mount Everest :)
 
            // distance_setVelocity(distanceObj, 0, 0, 255); // 255: speedUncertainty not supported!
 
@@ -745,12 +780,46 @@ void *_thread_get_distance(void *arg)
 {
 	lwm2m_object_t * distanceObj = (lwm2m_object_t *)arg;
 	distance_data_t* data = (distance_data_t*)distanceObj->userData;
-        	
+       
+	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+        prussdrv_init();
+
+        if (prussdrv_open (PRU_EVTOUT_0)) {
+
+                // Handle failure
+                fprintf(stderr, ">> PRU open failed\n");
+        }
+        /* Get the interrupt initialized */
+
+        prussdrv_pruintc_init(&pruss_intc_initdata);
+
+        void *pruDataMem;
+        prussdrv_map_prumem(PRUSS0_PRU0_DATARAM, &pruDataMem);
+        unsigned int *pruData = (unsigned int *) pruDataMem;
+
+
+        prussdrv_exec_program(0, "hcsr04.bin");
+ 	
 	while(1)
 	{
-	   data->distance = get_distance(); // Mount Everest :)
+	   prussdrv_pru_wait_event (PRU_EVTOUT_0);
+	   prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+	   
+	   //printf("Distance = %.2f cm\n", (float) pruData[0] / 58.44);
+	   
+	   if((pruData[0] / 58.44) < 100)
+	   	data->distance = (pruData[0] / 58.44); // Mount Everest :)
+	   	
 	   sleep(1);
 	}
+
+	/* Disable PRU and close memory mapping*/
+
+	prussdrv_pru_disable(0);
+
+	prussdrv_exit();
+
+	printf(">> PRU Disabled.\r\n");
 
 	pthread_exit(0);
 

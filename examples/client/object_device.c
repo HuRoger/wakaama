@@ -80,6 +80,7 @@
 #define PRV_ERROR_CODE        0
 #define PRV_TIME_ZONE         "Europe/Berlin"
 #define PRV_BINDING_MODE      "U"
+#define PRV_DEVICE_TYPE       "Test Device"
 
 #define PRV_OFFSET_MAXLEN   7 //+HH:MM\0 at max
 #define PRV_TLV_BUFFER_SIZE 128
@@ -276,6 +277,9 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
     case RES_M_BINDING_MODES:
         lwm2m_data_encode_string(PRV_BINDING_MODE, dataP);
         return COAP_205_CONTENT;
+    case RES_O_DEVICE_TYPE:
+        lwm2m_data_encode_string(PRV_DEVICE_TYPE, dataP);
+        return COAP_205_CONTENT;
 
     default:
         return COAP_404_NOT_FOUND;
@@ -316,7 +320,8 @@ static uint8_t prv_device_read(uint16_t instanceId,
                 RES_O_CURRENT_TIME,
                 RES_O_UTC_OFFSET,
                 RES_O_TIMEZONE,
-                RES_M_BINDING_MODES
+                RES_M_BINDING_MODES,
+                RES_O_DEVICE_TYPE
         };
         int nbRes = sizeof(resList)/sizeof(uint16_t);
 
@@ -375,7 +380,8 @@ static uint8_t prv_device_discover(uint16_t instanceId,
             RES_O_CURRENT_TIME,
             RES_O_UTC_OFFSET,
             RES_O_TIMEZONE,
-            RES_M_BINDING_MODES
+            RES_M_BINDING_MODES,
+            RES_O_DEVICE_TYPE
         };
         int nbRes = sizeof(resList) / sizeof(uint16_t);
 
@@ -410,6 +416,7 @@ static uint8_t prv_device_discover(uint16_t instanceId,
             case RES_O_UTC_OFFSET:
             case RES_O_TIMEZONE:
             case RES_M_BINDING_MODES:
+            case RES_O_DEVICE_TYPE:
                 break;
             default:
                 result = COAP_404_NOT_FOUND;

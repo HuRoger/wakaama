@@ -165,19 +165,19 @@ implementation GPIO control
 void gpio_init()
 {
 	iolib_init();
-	iolib_setdir(8,12,BBBIO_DIR_OUT);
+	iolib_setdir(8,16,BBBIO_DIR_OUT);
 	
 }
 
 void gpio_high()
 {
-	pin_high(8,12);
+	pin_high(8,16);
 	printf("set led light hight\n");
 }
 
 void gpio_low()
 {
-        pin_low(8,12);
+        pin_low(8,16);
 	 printf("set led light low\n");
 }
 

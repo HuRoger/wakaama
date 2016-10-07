@@ -65,7 +65,6 @@
 #include "connection.h"
 #endif
 
-#define LWM2M_WITH_LOGS 1
 
 #include <string.h>
 #include <stdlib.h>
@@ -91,6 +90,8 @@ static int g_quit = 0;
 
 #define OBJ_COUNT 11
 lwm2m_object_t * objArray[OBJ_COUNT];
+
+#define LWM2M_BOOTSTRAP 1
 
 // only backup security and server objects
 # define BACKUP_OBJECT_COUNT 2

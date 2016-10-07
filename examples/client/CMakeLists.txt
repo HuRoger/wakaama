@@ -7,7 +7,7 @@ option(DTLS "Enable DTLS" OFF)
 include(${CMAKE_CURRENT_LIST_DIR}/../../core/wakaama.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../shared/shared.cmake)
 
-add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_BOOTSTRAP -DLWM2M_SUPPORT_JSON)
+add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_BOOTSTRAP -DLWM2M_SUPPORT_JSON -DLWM2M_BOOTSTRAP)
 add_definitions(${SHARED_DEFINITIONS} ${WAKAAMA_DEFINITIONS})
 
 include_directories (${WAKAAMA_SOURCES_DIR} ${SHARED_INCLUDE_DIRS})
