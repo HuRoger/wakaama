@@ -65,6 +65,34 @@ lwm2m_object_t * get_object_distance(void);
 void free_object_distance(lwm2m_object_t * object);
 void display_distance_object(lwm2m_object_t * objectP);
 
+/*
+ * object_presence.c
+ */
+lwm2m_object_t * get_object_presence(void);
+void free_object_presence(lwm2m_object_t * object);
+void display_presence_object(lwm2m_object_t * objectP);
+
+/*
+ * object_actuation.c
+ */
+lwm2m_object_t * get_object_actuation(void);
+void free_object_actuation(lwm2m_object_t * object);
+void display_actuation_object(lwm2m_object_t * objectP);
+#if 0
+/*
+ * object_temperature.c
+ */
+lwm2m_object_t * get_object_temperature(void);
+void free_object_temperature(lwm2m_object_t * object);
+void display_temperature_object(lwm2m_object_t * objectP);
+#endif
+/*
+ * object_humidity.c
+ */
+lwm2m_object_t * get_object_humidity(void);
+void free_object_humidity(lwm2m_object_t * object);
+void display_humidity_object(lwm2m_object_t * objectP);
+
 
 /*
  * object_test.c

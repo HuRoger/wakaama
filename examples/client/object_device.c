@@ -80,7 +80,7 @@
 #define PRV_ERROR_CODE        0
 #define PRV_TIME_ZONE         "Europe/Berlin"
 #define PRV_BINDING_MODE      "U"
-#define PRV_DEVICE_TYPE       "Test Device"
+#define PRV_DEVICE_TYPE       "light control"
 
 #define PRV_OFFSET_MAXLEN   7 //+HH:MM\0 at max
 #define PRV_TLV_BUFFER_SIZE 128

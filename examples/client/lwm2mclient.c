@@ -88,7 +88,7 @@
 int g_reboot = 0;
 static int g_quit = 0;
 
-#define OBJ_COUNT 11
+#define OBJ_COUNT 10
 lwm2m_object_t * objArray[OBJ_COUNT];
 
 #define LWM2M_BOOTSTRAP 1
@@ -1082,13 +1082,13 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    objArray[9] = get_object_light();
+    objArray[9] = get_object_light(); //get_object_light
     if (NULL == objArray[9])
     {
         fprintf(stderr, "Failed to create light object\r\n");
         return -1;
     }
-#if 1
+#if 0
     objArray[10] = get_object_distance();
     if (NULL == objArray[10])
     {

@@ -36,7 +36,7 @@
 
 /*! \file
 
-  LWM2M object "light" implementation
+  LWM2M object "actuation" implementation
 
 
 
@@ -54,7 +54,7 @@
 
  *-------------+------+-----------+-----+-------------------------------+
 
- *  light   |   6  |    No     |  No |  see TS E.7 page 101          |
+ *  actuation   |   6  |    No     |  No |  see TS E.7 page 101          |
 
  *
 
@@ -78,7 +78,7 @@
 
  *              |     |      |         |     |         |       |       | opaque: see OMA_TS 6.3.2                                                         |
 
- *  Timestamp   |  5  |  R   | Single  | Yes | Time    |       |   s   | The timestamp when the light measurement was performed.                       |
+ *  Timestamp   |  5  |  R   | Single  | Yes | Time    |       |   s   | The timestamp when the actuation measurement was performed.                       |
 
  */
 
@@ -109,23 +109,34 @@
 
 
 
-// ---- private "object light" specific defines ----
+// ---- private "object actuation" specific defines ----
+// Smart Object Id's:
+
+#define SmartObjectID                         3306
 
 // Resource Id's:
 
 #define RES_M_On_Off                          5850
 
-#define RES_O_Dimmer                          5851
-
-#define RES_O_Colour                          5706
-
 #define RES_O_Units                           5701
+
+#define RES_O_MinRangeValue                   5603
+
+#define RES_O_MaxRangeValue                   5604
 
 #define RES_O_On_Time                         5852
 
 #define RES_O_Cumulative_active_power         5805
 
 #define RES_O_Power_factor                    5820
+
+
+#define PRV_Units                             "centimeter"
+
+#define PRV_MinRangeValue                     0
+
+#define PRV_MaxRangeValue                     100
+
 
 
 
@@ -145,15 +156,16 @@
 
 
 
+void *_thread_get_actuation(void *arg);
+
 typedef struct
 
 {
-
-	bool On_off;
+	bool actuation;
 
     unsigned long timestamp;
 
-} light_data_t;
+} actuation_data_t;
 
 
 /**
@@ -161,26 +173,15 @@ typedef struct
 implementation GPIO control	
 
 */
-
+#if 0
 void gpio_init()
 {
 	iolib_init();
-	iolib_setdir(8,16,BBBIO_DIR_OUT);
+	iolib_setdir(8,12,BBBIO_DIR_IN);
 	
 }
 
-void gpio_high()
-{
-	pin_high(8,16);
-	printf("set led light hight\n");
-}
-
-void gpio_low()
-{
-        pin_low(8,16);
-	 printf("set led light low\n");
-}
-
+#endif
 
 /**
 
@@ -190,23 +191,31 @@ implementation for all read-able resources
 
 static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
 
-                           light_data_t* locDataP)
+                           actuation_data_t* locDataP)
 
 {
 
     //-------------------------------------------------------------------- JH --
 
     uint8_t ret = COAP_205_CONTENT;  
+	
+   // locDataP->actuation = get_actuation();
 
-    switch (dataP->id)   // light resourceId
+    switch (dataP->id)   // actuation resourceId
 
     {
 
     case RES_M_On_Off:
 
-        lwm2m_data_encode_bool(locDataP->On_off, dataP);
+        lwm2m_data_encode_bool(locDataP->actuation, dataP);
 
         break;
+    case RES_O_Units:
+
+        lwm2m_data_encode_string(PRV_Units, dataP);
+
+        break;
+
 
     default:
 
@@ -236,7 +245,7 @@ static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
 
   * implemented for: HORIZONTAL_VELOCITY_WITH_UNCERTAINT
 
-  * @param objInstId    in,     instances ID of the light object to read
+  * @param objInstId    in,     instances ID of the actuation object to read
 
   * @param numDataP     in/out, pointer to the number of resource to read. 0 is the
 
@@ -244,11 +253,11 @@ static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
 
   * @param tlvArrayP    in/out, TLV data sequence with initialized resource ID to read
 
-  * @param objectP      in,     private light data structure
+  * @param objectP      in,     private actuation data structure
 
   */
 
-static uint8_t prv_light_read(uint16_t objInstId,
+static uint8_t prv_actuation_read(uint16_t objInstId,
                                  int*  numDataP,
 
                                  lwm2m_data_t** tlvArrayP,
@@ -261,7 +270,7 @@ static uint8_t prv_light_read(uint16_t objInstId,
 
     int     i;
     uint8_t result = COAP_500_INTERNAL_SERVER_ERROR;
-    light_data_t* locDataP = (light_data_t*)(objectP->userData);
+    actuation_data_t* locDataP = (actuation_data_t*)(objectP->userData);
 
     // defined as single instance object!
 
@@ -276,6 +285,7 @@ printf("test read\n");
         uint16_t readResIds[] = {
 
                 RES_M_On_Off,
+                RES_O_Units
 
         }; // readable resources!
 
@@ -308,14 +318,14 @@ printf("test read\n");
 }
 
 
-static uint8_t prv_light_write(uint16_t instanceId,
+static uint8_t prv_actuation_write(uint16_t instanceId,
                                   int numData,
                                   lwm2m_data_t * dataArray,
                                   lwm2m_object_t * objectP)
 {
     int i;
     uint8_t result;
-    light_data_t * data = (light_data_t*)(objectP->userData);
+    actuation_data_t * data = (actuation_data_t*)(objectP->userData);
 
     // this is a single instance object
     if (instanceId != 0)
@@ -334,16 +344,9 @@ static uint8_t prv_light_write(uint16_t instanceId,
 
         case RES_M_On_Off:
 
-            if (lwm2m_data_decode_bool(&dataArray[i], &data->On_off) == 1)
+            if (lwm2m_data_decode_bool(&dataArray[i], &(data->actuation)) == 1)
 
-            {
-		gpio_init();
-
-		if(data->On_off)
-		  gpio_high();
-		else
-	          gpio_low();
-		
+            {	
                 result = COAP_204_CHANGED;
             }
             else
@@ -365,7 +368,7 @@ static uint8_t prv_light_write(uint16_t instanceId,
 
 }
 
-static uint8_t prv_light_discover(uint16_t instanceId,
+static uint8_t prv_actuation_discover(uint16_t instanceId,
                                    int * numDataP,
                                    lwm2m_data_t ** dataArrayP,
                                    lwm2m_object_t * objectP)
@@ -392,7 +395,8 @@ static uint8_t prv_light_discover(uint16_t instanceId,
     {
 
         uint16_t resList[] = {
-            RES_M_On_Off
+            RES_M_On_Off,
+            RES_O_Units
         };
 
         int nbRes = sizeof(resList) / sizeof(uint16_t);
@@ -421,6 +425,7 @@ static uint8_t prv_light_discover(uint16_t instanceId,
             {
 
             case RES_M_On_Off:
+            case RES_O_Units:   
                 break;
 
             default:
@@ -432,15 +437,15 @@ static uint8_t prv_light_discover(uint16_t instanceId,
 
 }
 
-void display_light_object(lwm2m_object_t * object)
+void display_actuation_object(lwm2m_object_t * object)
 
 {
 
 #ifdef WITH_LOGS
 
-    light_data_t * data = (light_data_t *)object->userData;
+    actuation_data_t * data = (actuation_data_t *)object->userData;
 
-    fprintf(stdout, "  /%u: light object:\r\n", object->objID);
+    fprintf(stdout, "  /%u: actuation object:\r\n", object->objID);
 
     if (NULL != data)
 
@@ -476,7 +481,7 @@ void display_light_object(lwm2m_object_t * object)
 
   */
 
-void light_setVelocity(lwm2m_object_t* lightObj,
+void actuation_setVelocity(lwm2m_object_t* actuationObj,
 
                           uint16_t bearing,
 
@@ -488,7 +493,7 @@ void light_setVelocity(lwm2m_object_t* lightObj,
 
     //-------------------------------------------------------------------- JH --
 
-    light_data_t* pData = lightObj->userData;
+    actuation_data_t* pData = actuationObj->userData;
 
 	/*
 
@@ -528,7 +533,7 @@ void light_setVelocity(lwm2m_object_t* lightObj,
 
   */
 
-void light_setlightAtTime(lwm2m_object_t* lightObj,
+void actuation_setactuationAtTime(lwm2m_object_t* actuationObj,
 
                              float latitude,
 
@@ -542,7 +547,7 @@ void light_setlightAtTime(lwm2m_object_t* lightObj,
 
     //-------------------------------------------------------------------- JH --
 
-    light_data_t* pData = lightObj->userData;
+    actuation_data_t* pData = actuationObj->userData;
 
 
 
@@ -582,51 +587,51 @@ void light_setlightAtTime(lwm2m_object_t* lightObj,
 
   */
 
-lwm2m_object_t * get_object_light(void)
+lwm2m_object_t * get_object_actuation(void)
 
 {
 
     //-------------------------------------------------------------------- JH --
 
-    lwm2m_object_t * lightObj;
+    lwm2m_object_t * actuationObj;
+	
+    pthread_t thread_get_actuation;
 
+    actuationObj = (lwm2m_object_t *)lwm2m_malloc(sizeof(lwm2m_object_t));
+    
+    iolib_init();
+	iolib_setdir(8,12,BBBIO_DIR_IN);
 
-
-    lightObj = (lwm2m_object_t *)lwm2m_malloc(sizeof(lwm2m_object_t));
-
-    if (NULL != lightObj)
+    if (NULL != actuationObj)
 
     {
 
-        memset(lightObj, 0, sizeof(lwm2m_object_t));
+        memset(actuationObj, 0, sizeof(lwm2m_object_t));
 
 
 
         // It assigns its unique ID
 
-        // The 6 is the standard ID for the optional object "light".
+        // The 6 is the standard ID for the optional object "actuation".
 
-        lightObj->objID = 3311;//3311
+        actuationObj->objID = SmartObjectID;
 
         
 
         // and its unique instance
 
-        lightObj->instanceList = (lwm2m_list_t *)lwm2m_malloc(sizeof(lwm2m_list_t));
+        actuationObj->instanceList = (lwm2m_list_t *)lwm2m_malloc(sizeof(lwm2m_list_t));
 
-        if (NULL != lightObj->instanceList)
+        if (NULL != actuationObj->instanceList)
 
         {
-
-            memset(lightObj->instanceList, 0, sizeof(lwm2m_list_t));
-
+            memset(actuationObj->instanceList, 0, sizeof(lwm2m_list_t));
         }
 
         else
 
         {
-
-            lwm2m_free(lightObj);
+            lwm2m_free(actuationObj);
 
             return NULL;
 
@@ -642,25 +647,28 @@ lwm2m_object_t * get_object_light(void)
 
         //
 
-        lightObj->readFunc     = prv_light_read;
-	    lightObj->writeFunc    = prv_light_write;
-        lightObj->userData     = lwm2m_malloc(sizeof(light_data_t));
-	    lightObj->discoverFunc = prv_light_discover; 
+        actuationObj->readFunc     = prv_actuation_read;
+	    actuationObj->writeFunc    = prv_actuation_write;
+        actuationObj->userData     = lwm2m_malloc(sizeof(actuation_data_t));
+	    actuationObj->discoverFunc = prv_actuation_discover; 
 	
 
         // initialize private data structure containing the needed variables
 
-        if (NULL != lightObj->userData)
+        if (NULL != actuationObj->userData)
 
         {
 
-            light_data_t* data = (light_data_t*)lightObj->userData;
+            actuation_data_t* data = (actuation_data_t*)actuationObj->userData;
+            
+            if(is_high(8,11))
+                data->actuation = 1; // Mount Everest :)
+                
+	    	if(is_low(8,11))
+	    	    data->actuation = 0; // Mount Everest :)
+                
 
-            data->On_off = 1; // Mount Everest :)
-	        gpio_init();
-	        gpio_high(); 
-
-           // light_setVelocity(lightObj, 0, 0, 255); // 255: speedUncertainty not supported!
+           // actuation_setVelocity(actuationObj, 0, 0, 255); // 255: speedUncertainty not supported!
 
             data->timestamp   = time(NULL);
 
@@ -670,101 +678,24 @@ lwm2m_object_t * get_object_light(void)
 
         {
 
-            lwm2m_free(lightObj);
+            lwm2m_free(actuationObj);
 
-            lightObj = NULL;
+            actuationObj = NULL;
 
         }
 
     }
 
-#if 0
-	/* Initialize the PRU */
+    pthread_create(&thread_get_actuation, NULL, &_thread_get_actuation, (void *)actuationObj);	
+    pthread_detach(thread_get_actuation);   
 
-	printf(">> Initializing PRU\n");
-
-	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-
-	prussdrv_init();
-
-
-	/* Open PRU Interrupt */
-
-	if (prussdrv_open (PRU_EVTOUT_0)) {
-
-		// Handle failure
-		fprintf(stderr, ">> PRU open failed\n");
-	}
-	/* Get the interrupt initialized */
-
-	prussdrv_pruintc_init(&pruss_intc_initdata);
-
-
-
-	/* Get pointers to PRU local memory */
-
-	void *pruDataMem;
-
-	prussdrv_map_prumem(PRUSS0_PRU0_DATARAM, &pruDataMem);
-
-	unsigned int *pruData = (unsigned int *) pruDataMem;
-
-
-
-	/* Execute code on PRU */
-
-	printf(">> Executing HCSR-04 code\n");
-
-	prussdrv_exec_program(0, "hcsr04.bin");
-
-
-
-	/* Get measurements */
-
-	int i = 0;
-
-	while (i++ < 20) {
-
-	
-		// Wait for the PRU interrupt
-		prussdrv_pru_wait_event (PRU_EVTOUT_0);
-		prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-		
-
-		// Print the distance received from the sonar
-
-		// At 20 degrees in dry air the speed of sound is 342.2 cm/sec
-
-		// so it takes 29.12 us to make 1 cm, i.e. 58.44 us for a roundtrip of 1 cm
-
-		printf("%3d: Distance = %.2f cm\n", i, (float) pruData[0] / 58.44);
-
-		sleep(1);
-
-	}
-
-
-
-	/* Disable PRU and close memory mapping*/
-
-	prussdrv_pru_disable(0);
-
-	prussdrv_exit();
-
-	printf(">> PRU Disabled.\r\n");
-
-
-#endif
-
-    
-
-    return lightObj;
+    return actuationObj;
 
 }
 
 
 
-void free_object_light(lwm2m_object_t * object)
+void free_object_actuation(lwm2m_object_t * object)
 
 {
 
@@ -777,7 +708,42 @@ void free_object_light(lwm2m_object_t * object)
 }
 
 
+void *_thread_get_actuation(void *arg)
+
+{
+	lwm2m_object_t * actuationObj = (lwm2m_object_t *)arg;
+	actuation_data_t* data = (actuation_data_t*)actuationObj->userData;
+	
+	while(1)
+	{
+
+	   
+	   
+	   if(is_high(8,11))
+        data->actuation = true; // Mount Everest :)
+	   if(is_low(8,11))
+	    data->actuation = false; // Mount Everest :)
+	    
+	   printf("actuation = %d\n",data->actuation);
+	   	
+	   sleep(1);
+	}
+
+	/* Disable PRU and close memory mapping*/
+
+	prussdrv_pru_disable(0);
+
+	prussdrv_exit();
+
+	printf(">> PRU Disabled.\r\n");
+
+	pthread_exit(0);
+
+}
+
+
 
 #endif  //LWM2M_CLIENT_MODE
+
 
 
